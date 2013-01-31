@@ -87,22 +87,6 @@ module ActsAsTenant
             raise "#{association} is immutable! [ActsAsTenant]"
           end  
         end
-      
-        # add validation of associations against tenant scope
-        # we can't do this for polymorphic associations so we 
-        # exempt them
-        reflect_on_all_associations.each do |a|
-          unless a == reflection || a.macro == :has_many || a.macro == :has_one || a.macro == :has_and_belongs_to_many || a.options[:polymorphic]
-            # check if the association is aliasing another class, if so 
-            # find the unaliased class name
-            association_class =  a.options[:class_name].nil? ? a.name.to_s.classify.constantize : a.options[:class_name].constantize
-            validates_each a.foreign_key.to_sym do |record, attr, value|
-              # Invalidate the association unless the parent is known to the tenant or no association has
-              # been set.
-              record.errors.add attr, "is invalid [ActsAsTenant]" unless value.nil? || association_class.where(:id => value).present?
-            end
-          end
-        end 
       end
       
       def validates_uniqueness_to_tenant(fields, args ={})
